@@ -1,0 +1,22 @@
+{
+  "agent": {
+    "instructions": ".opencode/instructions.md",
+    "mcpServers": {
+      "windows-mcp": {
+        "autoApprove": [
+          "windows-mcp_App",
+          "windows-mcp_Process",
+          "windows-mcp_Screenshot",
+          "windows-mcp_Snapshot",
+          "windows-mcp_Shortcut",
+          "windows-mcp_Type",
+          "windows-mcp_Click",
+          "windows-mcp_Move",
+          "windows-mcp_Notification",
+          "windows-mcp_PowerShell",
+          "windows-mcp_Clipboard"
+        ]
+      }
+    }
+  }
+}
