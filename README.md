@@ -1,24 +1,69 @@
-# 🐾 Boss Agent — 24/7 Multi-Session Controller
+<div align="center">
 
-Turn **one opencode window connected to Windows MCP** into a fully autonomous **boss agent** that monitors, controls, and prompts every other opencode/AI model session on your machine — **24 hours a day, 7 days a week**.
+# Boss Agent
 
-No cloud dependency. No paid API. Just PowerShell + Windows MCP running locally.
+### 24/7 Multi-Session Controller for opencode + Windows MCP
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows)](https://github.com/cryxservices-glitch/watchdog-agent)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?logo=powershell)](https://github.com/cryxservices-glitch/watchdog-agent)
+[![GitHub Repo](https://img.shields.io/badge/Repo-watchdog--agent-181717?logo=github)](https://github.com/cryxservices-glitch/watchdog-agent)
+
+**[Install](#-quick-install) · [How It Works](#-how-it-works) · [Setup](#-setup) · [Usage](#-usage) · [Configuration](#%EF%B8%8F-configuration) · [License](#-license)**
+
+---
+
+Turn **one opencode window connected to Windows MCP** into a fully autonomous **boss agent** that monitors, controls, and re-prompts every other opencode and AI model session on your machine — **24 hours a day, 7 days a week**.
+
+**Zero cloud dependency. Zero API costs. Zero configuration.**
+
+</div>
+
+---
+
+## 📦 Quick Install
+
+```powershell
+# Clone the repo
+git clone https://github.com/cryxservices-glitch/watchdog-agent.git
+cd watchdog-agent
+
+# Start the background watchdog (runs 24/7)
+.\launcher.ps1
+
+# In a second terminal, open the boss agent in opencode
+opencode
+```
+
+<details>
+<summary><b>📋 Prerequisites</b></summary>
+
+| Requirement | Notes |
+|------------|-------|
+| Windows 10 or 11 | x64 recommended |
+| PowerShell 5.1+ | Ships with Windows |
+| [opencode](https://opencode.ai) | `npm install -g @opencode/cli` |
+| [Windows MCP](https://github.com/Windows-MCP/windows-mcp) | Install via `uv tools` or your package manager |
+
+</details>
 
 ---
 
 ## ⚡ What It Does
 
-The Boss Agent solves one problem: **AI sessions stall**. Models get stuck mid-thought, hit API rate limits, drift into long loops, or just go idle. Without supervision, a 10-minute task becomes a 10-hour wait.
+AI sessions stall. Models get stuck mid-thought, hit API rate limits, drift into infinite loops, or sit idle indefinitely. Without supervision, a 10‑minute task becomes a 10‑hour wait.
 
-The Boss Agent watches every opencode/AI session on your machine. When one stalls, it:
+The Boss Agent solves this by watching every opencode and AI session on your machine. When one stalls, it:
 
-1. **Detects** it via CPU monitoring (0% CPU for 60s = stalled)
-2. **Switches** to its window
-3. **Types** a prompt (`continue`, `y`, `proceed`, etc.)
-4. **Verifies** it resumed (CPU goes back up)
-5. **Escalates** if it won't recover (Windows notification)
+| Step | Action |
+|------|--------|
+| 1 | **Detects** the stall — CPU drops below 1% for ~30 seconds |
+| 2 | **Switches** to the stalled window |
+| 3 | **Types** a recovery prompt — `continue`, `y`, `proceed`, `keep going` |
+| 4 | **Verifies** the session resumed — CPU returns to normal |
+| 5 | **Escalates** if unrecoverable — sends a Windows notification |
 
-It never sleeps. It never forgets.
+It never sleeps. It never forgets. It works with any AI tool that runs in a terminal.
 
 ---
 
@@ -27,109 +72,92 @@ It never sleeps. It never forgets.
 ### Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                      YOUR MACHINE                         │
-│                                                           │
-│  ┌──────────────────────────────────────────────────┐    │
-│  │  BOSS WINDOW (opencode + Windows MCP)             │    │
-│  │                                                    │    │
-│  │  ┌─────────────────────┐  ┌───────────────────┐   │    │
-│  │  │ boss-watchdog.ps1   │  │ opencode agent     │   │    │
-│  │  │ (PowerShell,        │  │ (manual control,   │   │    │
-│  │  │  runs 24/7)         │  │  visual checks)    │   │    │
-│  │  └──────────┬──────────┘  └─────────┬─────────┘   │    │
-│  │             │                       │              │    │
-│  │             │  Windows MCP tools:   │              │    │
-│  │             │  Process, App, Type,  │              │    │
-│  │             │  Snapshot, Notification               │    │
-│  └─────────────┼───────────────────────┼──────────────┘    │
-│                │                       │                   │
-│     ┌──────────┼───────────┬───────────┼──────────┐        │
-│     │          │           │           │          │        │
-│  ┌──▼──┐  ┌───▼───┐  ┌───▼───┐  ┌───▼───┐  ┌───▼───┐    │
-│  │OC:1 │  │OC:2   │  │OC:3   │  │Hermes │  │OJI    │    │
-│  │Port │  │Port   │  │Port   │  │Agent  │  │Agent  │    │
-│  │5173 │  │5175   │  │5174   │  │       │  │       │    │
-│  └─────┘  └───────┘  └───────┘  └───────┘  └───────┘    │
-│                                                           │
-└──────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        YOUR MACHINE                              │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              BOSS WINDOW (opencode + MCP)                  │    │
+│  │                                                           │    │
+│  │  ┌────────────────────────┐  ┌────────────────────────┐  │    │
+│  │  │  boss-watchdog.ps1     │  │  opencode agent        │  │    │
+│  │  │  (PowerShell daemon)   │  │  (interactive control) │  │    │
+│  │  └───────────┬────────────┘  └───────────┬────────────┘  │    │
+│  │              │                           │                │    │
+│  │              │  Windows MCP Toolchain     │                │    │
+│  │              │  Process · App · Type ·    │                │    │
+│  │              │  Snapshot · Notification   │                │    │
+│  └──────────────┼───────────────────────────┼────────────────┘    │
+│                 │                           │                     │
+│       ┌─────────┼──────┬──────────┬─────────┼──────┐              │
+│       │         │      │          │         │      │              │
+│    ┌──▼──┐  ┌───▼───┐ ┌──▼───┐ ┌──▼───┐ ┌──▼───┐ ┌──▼───┐        │
+│    │OC:1 │  │OC:2   │ │OC:3  │ │Hermes│ │OJI   │ │More  │        │
+│    │Port │  │Port   │ │Port  │ │Agent │ │Agent │ │...   │        │
+│    │5173 │  │5175   │ │5174  │ │      │ │      │ │      │        │
+│    └─────┘  └───────┘ └──────┘ └──────┘ └──────┘ └──────┘        │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Two Layers of Control
 
-**Layer 1: PowerShell Watchdog (`boss-watchdog.ps1`)**  
-Runs in the background. Zero user interaction needed. Every 15 seconds it:
+**Layer 1 — PowerShell Watchdog** (`boss-watchdog.ps1`)
 
-1. **Scans** all running processes for opencode/AI sessions
-2. **Measures** each session's CPU usage
-3. **Tags** sessions as: `ALIVE` (CPU > 1%), `STALLED` (CPU < 1% for 60s+), or `DEAD` (process gone)
-4. **Nudges** stalled sessions using Windows COM (`WScript.Shell.SendKeys`):
-   - Activates the stalled window
-   - Types `continue`, `y`, `proceed`, `keep going`, etc. (rotates through list)
-   - Presses Enter
-5. **Logs** everything to `boss-state.json` and `boss-watchdog.log`
-6. **Repeats** — forever
+Runs as a hidden background process. Zero user interaction required. Every 15 seconds it:
 
-**Layer 2: opencode Boss Agent (opencode.json + .opencode/instructions.md)**  
-When you open opencode in this directory, it loads as the **boss agent** with full Windows MCP access. You can:
+1. **Scans** every running process on the machine
+2. **Matches** processes that look like opencode and AI sessions
+3. **Measures** CPU consumption per session
+4. **Classifies** each session: `ALIVE` (CPU > 1%), `STALLED` (CPU < 1% for 30s+), `DEAD` (process terminated)
+5. **Nudges** stalled sessions via the Windows COM `SendKeys` API — activates the window, types a recovery prompt, presses Enter
+6. **Persists** state to `boss-state.json` and a rotating log file
+7. **Repeats** indefinitely
 
-- Ask `"status"` — shows all sessions with CPU, memory, state
-- Ask `"check session 2"` — takes a screenshot and visually checks it
-- Ask `"nudge session 3"` — manually switches and types a prompt
-- Ask `"monitor everything"` — starts a visual monitoring loop using Snapshot
-- The agent can use all Windows MCP tools: Process, Snapshot, App, Type, Click, Notification
+**Layer 2 — Opencode Boss Agent** (`opencode.json` + `.opencode/instructions.md`)
 
-### Why Two Layers?
+When you open opencode inside the repo directory, it automatically loads as the **boss agent** with full Windows MCP tool access:
+
+| Command | What it does |
+|---------|-------------|
+| `"status"` | Lists all sessions with CPU, memory, and state |
+| `"check session 2"` | Takes a screenshot and visually inspects the session |
+| `"nudge session 3"` | Manually switches to and re-prompts a session |
+| `"monitor everything"` | Starts a visual monitoring loop using Snapshot |
+| `"alert me if anything stalls"` | Watches and sends toast notifications |
+
+### Capability Comparison
 
 | Feature | PowerShell Watchdog | opencode Boss Agent |
-|---------|-------------------|-------------------|
-| Runs 24/7 without input | ✅ | ❌ (needs opencode open) |
+|---------|:---:|:---:|
+| Runs 24/7 without input | ✅ | — |
 | Auto-discovers sessions | ✅ | ✅ |
 | CPU monitoring | ✅ | ✅ |
 | SendKeys nudges | ✅ | ✅ |
-| Visual checks (screenshots) | ❌ | ✅ (via Snapshot) |
-| Complex decision making | ❌ ("is it stuck?") | ✅ ("why is it stuck?") |
-| User notifications | ✅ (log only) | ✅ (Windows toast) |
-| Window management | ✅ (switch + type) | ✅ (switch + type + click) |
+| Visual checks (screenshots) | — | ✅ |
+| Intelligent stall diagnosis | — | ✅ |
+| Windows toast notifications | — | ✅ |
+| Click-based interaction | — | ✅ |
 
-Run **both** for full power: the PowerShell watchdog runs 24/7 in the background, and when you open opencode you get full visual control.
+Run **both** for maximum power. The PowerShell watchdog provides always‑on background supervision; the opencode agent adds visual diagnostics and manual override when you need it.
 
 ---
 
 ## 🚀 Setup
 
-### Requirements
-
-- **Windows 10 or 11**
-- **PowerShell 5.1+** (comes with Windows)
-- **opencode** installed (`npm install -g @opencode/cli` or your install method)
-- **Windows MCP** installed and configured in opencode
-
-### Step 1: Clone
+### Step 1: Clone & Launch
 
 ```powershell
 git clone https://github.com/cryxservices-glitch/watchdog-agent.git
 cd watchdog-agent
-```
-
-### Step 2: Start the Background Watchdog
-
-```powershell
 .\launcher.ps1
 ```
 
-Or directly:
-
-```powershell
-.\boss-watchdog.ps1
-```
-
-You'll see output like:
+The launcher starts `boss-watchdog.ps1` as a hidden PowerShell process. You'll see console output confirming startup:
 
 ```
 [2026-05-26 10:30:00] [SYSTEM] BOSS WATCHDOG v3 STARTED
 [2026-05-26 10:30:00] [SYSTEM] Interval: 15s | Threshold: 1%
-[2026-05-26 10:30:15] [STATUS] --- Cycle 1 — 3 sessions ---
+[2026-05-26 10:30:15] [STATUS] --- Cycle 1 — 3 sessions found ---
 [2026-05-26 10:30:17] [STATUS] Session 1: PID 2316 CPU 45.2% MEM 320MB
 [2026-05-26 10:30:17] [STATUS] Session 2: PID 8652 CPU 0.3% MEM 280MB
 [2026-05-26 10:30:19] [STALL]  Session 2 STALLED
@@ -137,65 +165,60 @@ You'll see output like:
 [2026-05-26 10:30:20] [STATUS] Summary: 2 alive, 1 stalled, 0 dead | Uptime 0m
 ```
 
-### Step 3: Open the Boss Agent in opencode
+### Step 2: Open the Boss Agent
 
-In a **second** terminal:
+In a **second** terminal window:
 
 ```powershell
+cd watchdog-agent
 opencode
 ```
 
-Since you're in the `watchdog-agent` directory, opencode will:
-- Load `opencode.json` which grants auto-approval for Windows MCP tools
-- Read `.opencode/instructions.md` so it knows its job
-- The agent will understand it's the "boss" and knows how to monitor/nudge
+The directory's `opencode.json` and `.opencode/instructions.md` are loaded automatically, granting the agent Windows MCP access and informing it of its role. Try:
 
-Try saying:
-
-> "check all sessions and report status"
+> *"Check all sessions and report status"*
 >
-> "monitor session 2 and let me know if it stalls"
+> *"Watch session 2 and nudge it if it stalls"*
 >
-> "start the watchdog loop"
+> *"Start a continuous monitoring loop"*
 
-### Step 4: (Optional) Auto-Start on Boot
-
-Add `launcher.ps1` to Windows Task Scheduler or Startup folder:
+### Step 3: Auto-Start on Boot (Optional)
 
 ```powershell
-# Create a shortcut in the startup folder
-$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\Boss Agent.lnk")
-$shortcut.TargetPath = "powershell.exe"
-$shortcut.Arguments = "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$env:USERPROFILE\watchdog-agent\launcher.ps1`""
-$shortcut.Save()
+$w = "$env:USERPROFILE\watchdog-agent"
+$s = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\Boss Agent.lnk")
+$s.TargetPath = "powershell.exe"
+$s.Arguments = "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$w\launcher.ps1`""
+$s.WorkingDirectory = $w
+$s.Save()
 ```
 
 ---
 
-## 📊 Monitoring
+## 📊 Usage
 
-### Check Status
+### Check Watchdog Status
 
 ```powershell
 .\status.ps1
 ```
 
-Output:
+Example output:
 
 ```
 Watchdog: RUNNING (PID 1234)
 
 --- Last State ---
-timestamp    : 2026-05-26T10:30:00
 uptimeMin    : 45.2
 cycle        : 181
 sessionCount : 3
-sessions     : {@{id=1; pid=2316; title=opencode; status=ALIVE; cpu=45.2; nudges=0},
-                @{id=2; pid=8652; title=opencode; status=ALIVE; cpu=12.1; nudges=3},
-                @{id=3; pid=4412; title=opencode; status=STALLED; cpu=0.1; nudges=8}}
+
+Session 1: PID 2316 | ALIVE  | CPU 45.2% | 0 nudges
+Session 2: PID 8652 | ALIVE  | CPU 12.1% | 3 nudges
+Session 3: PID 4412 | STALLED | CPU 0.1% | 8 nudges
 ```
 
-### Live Log
+### View Live Log
 
 ```powershell
 Get-Content .\boss-watchdog.log -Tail 20
@@ -211,50 +234,63 @@ Get-Content .\boss-watchdog.log -Tail 20
 
 ## ⚙️ Configuration
 
-All config is at the top of `boss-watchdog.ps1`:
+All tuning parameters are at the top of `boss-watchdog.ps1`:
 
-| Parameter | Default | What it does |
+| Parameter | Default | Description |
 |-----------|---------|-------------|
-| `Interval` | 15 seconds | How often to check sessions |
-| `StallThreshold` | 1.0% CPU | CPU below this = session might be stalled |
-| Stall detection | 2 consecutive checks below threshold | ~30s before nudging |
+| `Interval` | 15 seconds | Polling frequency |
+| `StallThreshold` | 1.0% CPU | Below this = candidate for stall |
+| Stall confirmation | 2 consecutive samples | ~30 seconds before a nudge is sent |
 
-### Nudge Text Cycle
+### Customizing Nudge Prompts
 
-The watchdog rotates through: `continue`, `y`, `proceed`, `keep going`, `next`, `go`, `run`, `yes`
+The watchdog rotates through these prompts:
 
-Edit `$NudgeTexts` in the script to customize.
+```
+continue → y → proceed → keep going → next → go → run → yes
+```
+
+Edit the `$NudgeTexts` array in `boss-watchdog.ps1` to add or change prompts:
+
+```powershell
+$NudgeTexts = @('continue', 'y', 'proceed', 'your custom prompt here')
+```
 
 ---
 
 ## 🔧 Troubleshooting
 
-### "No sessions found"
-The watchdog looks for processes named `powershell`, `pwsh`, or `node` whose command line or window title matches `opencode`, `codex`, `hermes`, or `openjarvis`. If your AI tool uses a different name, edit `FindSessions` in `boss-watchdog.ps1`.
-
-### "Can't activate window"
-Some windows don't respond to COM `AppActivate`. The watchdog silently skips those. The opencode boss agent can use `windows-mcp_App` mode:switch instead, which is more reliable.
-
-### "Watchdog stopped working"
-Check the log: `.\status.ps1`. If the process is dead, just restart: `.\launcher.ps1`.
-
-### "The nudges aren't reaching my model"
-SendKeys sends keystrokes to the **active window**. Make sure:
-1. The window isn't minimized
-2. The window has a text input focused
-3. No other window steals focus between activation and typing
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| "No sessions found" | AI tool uses a process name not in the match list | Edit `FindSessions` in `boss-watchdog.ps1` to include your tool's process name |
+| "Can't activate window" | Window doesn't respond to COM `AppActivate` | Use the opencode agent with `windows-mcp_App` (mode: switch) instead |
+| Watchdog stopped | Process was killed or crashed | Run `.\launcher.ps1` to restart |
+| Nudges not reaching the model | Keystrokes going to wrong window | Ensure the stalled window has keyboard focus; no other window grabs it |
+| High false positives | CPU threshold too aggressive | Raise `$StallThreshold` in `boss-watchdog.ps1` |
 
 ---
 
 ## 🧪 Why This Is Powerful
 
-1. **Fully local** — Zero cloud dependency. No API costs. No data leaves your machine.
-2. **Model-agnostic** — Works with any AI tool that runs in a terminal: opencode, Codex CLI, Claude Code, Hermes, OpenJarvis, etc.
-3. **Session-agnostic** — Monitors multiple models simultaneously. Let GPT-4 work on feature A while Claude works on feature B.
-4. **Self-healing** — If a session crashes, it's detected within 15 seconds and logged.
-5. **Extensible** — Add custom actions per session. Kill and restart hung processes. Take screenshots. Send Telegram alerts.
-6. **Two control layers** — The PowerShell watchdog runs unattended 24/7. The opencode agent gives you full MCP-powered control when you want it.
-7. **Completely free** — No subscriptions, no metered API, no "credits." Your hardware, your rules.
+- **Fully local.** No cloud dependency. No API costs. No data leaves your machine.
+- **Model‑agnostic.** Works with opencode, Codex CLI, Claude Code, Hermes, OpenJarvis — any AI tool running in a terminal.
+- **Multi‑session.** Monitors any number of AI models simultaneously. Let one model work on feature A while another works on feature B.
+- **Self‑healing.** Detects crashes within seconds and logs them for review.
+- **Extensible.** Add kill‑and‑restart logic, Telegram alerts, screenshot capture, or rate‑limit detection.
+- **Two control layers.** The PowerShell watchdog runs unattended 24/7 in the background. The opencode agent gives you full MCP‑powered interactive control.
+- **Completely free.** No subscriptions, no metered APIs, no credits. Your hardware, your rules.
+
+---
+
+## 💡 Use Cases
+
+| Scenario | How the Boss Agent Helps |
+|----------|--------------------------|
+| Running 3 opencode sessions on different codebases | Monitors all three; if one gets stuck on a rate limit, re‑prompts it |
+| Long‑running code generation | Detects silent model stalls and re‑activates it |
+| Multi‑model orchestration | One boss agent coordinates many worker agents |
+| Overnight batch processing | Runs all night; logs every stall and nudge for morning review |
+| Training / fine‑tuning workflows | Detects when training scripts hang or crash |
 
 ---
 
@@ -262,52 +298,34 @@ SendKeys sends keystrokes to the **active window**. Make sure:
 
 | File | Purpose |
 |------|---------|
-| `boss-watchdog.ps1` | Main background watchdog — auto-discovers sessions, monitors CPU, nudges stalled ones |
-| `boss-state.json` | Live JSON state — updated every 15 seconds with session status |
-| `boss-heartbeat.json` | Heartbeat for monitoring if the watchdog itself is alive |
-| `boss-watchdog.log` | Full log with timestamps |
-| `boss-halt.flag` | Flag file — create this to gracefully stop the watchdog |
-| `opencode.json` | opencode agent configuration with Windows MCP auto-approval |
-| `.opencode/instructions.md` | Instructions that tell opencode it's the boss agent |
-| `launcher.ps1` | One-click start the background watchdog |
-| `status.ps1` | Quick status check — is watchdog running? What's the latest state? |
-| `stop.ps1` | Graceful stop — sets halt flag, then force-kills if needed |
+| `boss-watchdog.ps1` | Background watchdog — session discovery, CPU monitoring, stall nudging |
+| `boss-state.json` | Live JSON state, updated every 15 seconds |
+| `boss-heartbeat.json` | Heartbeat for external monitoring |
+| `boss-watchdog.log` | Rotating log with timestamped entries |
+| `boss-halt.flag` | Create this file to trigger a graceful shutdown |
+| `opencode.json` | Opencode agent configuration with Windows MCP auto‑approval |
+| `.opencode/instructions.md` | Agent instructions that define the boss agent role |
+| `launcher.ps1` | One‑click background watchdog launcher |
+| `status.ps1` | Quick health check and state summary |
+| `stop.ps1` | Graceful watchdog termination |
+| `LICENSE` | MIT license |
 
 ---
 
-## 🔄 How Sessions Are Discovered
+## 🤝 Contributing
 
-The watchdog does NOT use hardcoded PIDs or ports. It dynamically scans every `powershell`, `pwsh`, and `node` process on your machine and checks:
-
-1. **Command line** — Does it contain `opencode`, `codex`, `hermes`, `openjarvis`?
-2. **Window title** — Does the title match these names?
-3. **Fallback** — Any PowerShell with a non-empty window title (for manual terminals running AI tools)
-
-This means you can start/stop sessions freely. The watchdog adapts automatically.
+Issues and pull requests are welcome. The entire watchdog is ~120 lines of PowerShell — modify it freely to fit your workflow.
 
 ---
 
-## 💡 Use Cases
+## 📄 License
 
-| Scenario | How the Boss Agent helps |
-|----------|------------------------|
-| Running 3 opencode sessions for different tasks | Monitors all 3. If one gets stuck on a rate limit, nudges it. |
-| Long-running code generation | Detects when the model goes silent (stalls) and re-prompts it. |
-| Multi-model orchestration | One agent controls others. Let the boss coordinate. |
-| Overnight batch processing | Runs all night. Nudges stalled sessions. Logs everything for morning review. |
-| Training/fine-tuning monitoring | Detects when training scripts hang or crash. |
+[MIT](LICENSE) — do what you want with it.
 
 ---
 
-## 🧩 Extending
+<div align="center">
 
-The watchdog is designed to be extended. Here are things you can add:
+**Built for opencode · Powered by Windows MCP**
 
-- **Kill and restart** completely hung sessions
-- **Send Telegram/Discord alerts** when all sessions are dead
-- **Take screenshots** of stalled sessions (via opencode agent)
-- **Route traffic** between sessions (e.g., pass outputs from one to another)
-- **Rate limit detection** — if a session returns errors repeatedly, pause it
-- **Schedule** specific tasks at specific times
-
-The `boss-watchdog.ps1` script is ~120 lines of pure PowerShell. Modify freely.
+</div>
